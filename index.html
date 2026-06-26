@@ -1159,6 +1159,12 @@
     }
   }
 
+  // 隱藏編輯網址：#edit-m7k3x9 自動進入管理模式
+  if (window.location.hash === '#edit-m7k3x9') {
+    sessionStorage.setItem('admin', '1');
+    history.replaceState(null, '', window.location.pathname);
+  }
+
   applyMode();
 
   // ── 截圖上傳：點擊或拖曳 ──
