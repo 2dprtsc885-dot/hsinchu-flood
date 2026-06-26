@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新竹市積水事件紀錄</title>
+  <style>
+    :root {
+      --color-bg: #f5f4f0;
+      --color-surface: #ffffff;
+      --color-header-bg: #1c2b3a;
+      --color-accent: #e8630a;
+      --color-text: #1a1a1a;
+      --color-text-muted: #6b7280;
+      --color-border: #e5e7eb;
+      --color-tag: #fef2f2;
+      --color-tag-text: #dc2626;
+      --color-edit-ring: #3b82f6;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', monospace;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--color-header-bg);
+      color: #fff;
+      padding: 2rem 2.5rem;
+    }
+
+    .header-inner { max-width: 1200px; margin: 0 auto; }
+
+    .header-tag {
+      display: inline-block;
+      background: var(--color-accent);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-meta {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .count-badge {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+    }
+
+    .count-badge strong { color: var(--color-text); font-weight: 600; }
+
+    .edit-hint {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .edit-hint::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-edit-ring);
+    }
+
+    .table-wrap {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead { background: var(--color-header-bg); }
+
+    thead th {
+      color: rgba(255,255,255,0.65);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.9rem 1.25rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th:first-child { padding-left: 1.5rem; }
+    thead th:last-child  { padding-right: 1.5rem; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--color-border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+
+    td {
+      padding: 1.1rem 1.25rem;
+      vertical-align: middle;
+    }
+
+    td:first-child { padding-left: 1.5rem; }
+    td:last-child  { padding-right: 1.5rem; }
+
+    .cell-id {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .cell-time { white-space: nowrap; }
+
+    .time-date { font-weight: 600; }
+
+    .time-approx {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .cell-location { min-width: 200px; }
+
+    /* ── 可編輯地理位置 ── */
+    .location-name {
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 0.4rem;
+      border-radius: 4px;
+      padding: 0.25rem 0.4rem;
+      margin-left: -0.4rem;
+      outline: none;
+      transition: box-shadow 0.15s, background 0.15s;
+      cursor: text;
+      min-width: 80px;
+      display: inline-block;
+    }
+
+    .location-name:hover {
+      background: #f0f4ff;
+      box-shadow: 0 0 0 2px #bfdbfe;
+    }
+
+    .location-name:focus {
+      background: #fff;
+      box-shadow: 0 0 0 2px var(--color-edit-ring);
+    }
+
+    .location-name.saved-flash {
+      background: #dcfce7;
+      box-shadow: 0 0 0 2px #86efac;
+    }
+
+    .edit-badge {
+      font-size: 0.65rem;
+      color: var(--color-edit-ring);
+      font-weight: 500;
+      margin-left: 0.3rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .location-name:focus + .edit-badge,
+    .location-name:hover + .edit-badge {
+      opacity: 1;
+    }
+
+    .location-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: var(--color-tag);
+      color: var(--color-tag-text);
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.18rem 0.5rem;
+      border-radius: 3px;
+      letter-spacing: 0.03em;
+    }
+
+    .cell-screenshot { width: 140px; }
+
+    .screenshot-wrap {
+      position: relative;
+      display: inline-block;
+      width: 120px;
+    }
+
+    .screenshot-thumb {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 5px;
+      border: 1px solid var(--color-border);
+      display: block;
+      background: var(--color-bg);
+    }
+
+    .screenshot-remove-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      font-size: 0.7rem;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .screenshot-remove-btn:hover { background: #dc2626; }
+
+    /* 只在管理模式 + hover 時顯示移除鈕 */
+    body.admin-mode .screenshot-wrap:hover .screenshot-remove-btn {
+      display: flex;
+    }
+
+    .screenshot-placeholder {
+      width: 120px;
+      height: 80px;
+      border-radius: 5px;
+      border: 2px dashed var(--color-border);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+      font-size: 0.7rem;
+      text-align: center;
+      line-height: 1.5;
+      background: var(--color-bg);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .screenshot-placeholder:hover {
+      border-color: var(--color-edit-ring);
+      background: #eff6ff;
+      color: var(--color-edit-ring);
+    }
+
+    .screenshot-placeholder.drag-over {
+      border-color: var(--color-accent);
+      background: var(--color-accent-light);
+    }
+
+    .upload-input { display: none; }
+
+    .cell-source a {
+      color: var(--color-accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .cell-source a:hover { text-decoration: underline; }
+
+    .source-platform {
+      font-size: 0.68rem;
+      color: var(--color-text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .icon-ext {
+      width: 12px;
+      height: 12px;
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      position: relative;
+    }
+
+    .admin-toggle-btn {
+      position: absolute;
+      right: 1.5rem;
+      bottom: 1.75rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      opacity: 0.2;
+      transition: opacity 0.2s;
+      line-height: 1;
+      padding: 0.25rem;
+    }
+    .admin-toggle-btn:hover { opacity: 0.7; }
+
+    /* ── 管理模式提示列 ── */
+    .admin-bar {
+      display: none;
+      background: #fef9c3;
+      border-bottom: 1px solid #fde047;
+      padding: 0.45rem 2.5rem;
+      font-size: 0.75rem;
+      color: #854d0e;
+      font-weight: 500;
+      text-align: center;
+    }
+    body.admin-mode .admin-bar { display: block; }
+
+    /* ── 閱覽模式：隱藏所有編輯介面 ── */
+    body.view-mode .location-name {
+      cursor: default;
+      pointer-events: none;
+    }
+    body.view-mode .location-name:hover,
+    body.view-mode .location-name:focus {
+      background: none;
+      box-shadow: none;
+    }
+    body.view-mode .edit-badge { display: none; }
+    body.view-mode .edit-hint  { display: none; }
+    body.view-mode .screenshot-placeholder { display: none !important; }
+    body.view-mode .upload-input { display: none; }
+
+    /* ── GitHub 同步 UI ── */
+    .gh-status {
+      font-size: 0.65rem;
+      margin-top: 0.3rem;
+      min-height: 0.9rem;
+      line-height: 1.4;
+      color: #6b7280;
+    }
+
+    .gh-indicator {
+      margin-left: 1.25rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      white-space: nowrap;
+    }
+    .gh-indicator.connected    { color: #16a34a; }
+    .gh-indicator.disconnected { color: #b45309; text-decoration-style: dashed; }
+    .gh-indicator.syncing      { color: #3b82f6; }
+
+    .gh-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .gh-modal {
+      background: #fff; border-radius: 10px;
+      padding: 1.5rem; width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    }
+
+    .gh-modal h3 { font-size: 1rem; margin-bottom: 0.35rem; }
+
+    .gh-modal p {
+      font-size: 0.78rem; color: #6b7280;
+      margin-bottom: 1rem; line-height: 1.55;
+    }
+
+    .gh-modal code {
+      background: #f3f4f6; padding: 0.1rem 0.35rem;
+      border-radius: 3px; font-size: 0.75rem;
+    }
+
+    .gh-modal input[type=password] {
+      width: 100%; padding: 0.5rem 0.75rem;
+      border: 1px solid #e5e7eb; border-radius: 6px;
+      font-size: 0.85rem; font-family: var(--font-sans);
+      margin-bottom: 0.5rem; outline: none;
+    }
+    .gh-modal input[type=password]:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+
+    .gh-test-result { font-size: 0.75rem; min-height: 1.1rem; margin-bottom: 0.75rem; }
+
+    .gh-modal-btns { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+
+    .gh-modal-btns button {
+      padding: 0.4rem 0.9rem; border-radius: 5px;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      font-family: var(--font-sans);
+      border: 1px solid #e5e7eb; background: #f9fafb; color: #374151;
+    }
+    .gh-modal-btns .btn-save  { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .gh-modal-btns .btn-clear { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+    /* ── 導覽 tab ── */
+    .page-nav {
+      background: #15232f;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .page-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2.5rem;
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .nav-tab:hover { color: rgba(255,255,255,0.85); }
+
+    .nav-tab.active {
+      color: #fff;
+      border-bottom-color: var(--color-accent);
+    }
+  </style>
+</head>
+<body class="view-mode">
+
+<div class="admin-bar">
+  ✏️ 管理模式中 — 地理位置可點擊編輯，截圖欄可上傳圖片
+  <span id="gh-indicator" class="gh-indicator disconnected" onclick="showGhModal()" title="點擊設定 GitHub 自動同步">○ 設定 GitHub</span>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-tag">即時回報</div>
+    <h1>新竹市積水事件紀錄</h1>
+    <div class="header-meta">
+      <span>資料來源：社群媒體回報</span>
+      <span>最後更新：2026-06-26</span>
+      <span>事件標籤：#626竹市淹水</span>
+    </div>
+  </div>
+</header>
+
+<nav class="page-nav">
+  <div class="page-nav-inner">
+    <a href="index.html" class="nav-tab active">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="14" height="11" rx="1"/><path d="M1 7h14"/><path d="M5 3V2M11 3V2"/></svg>
+      紀錄表格
+    </a>
+    <a href="map.html" class="nav-tab">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2C5.24 2 3 4.24 3 7c0 4 5 9 5 9s5-5 5-9c0-2.76-2.24-5-5-5z"/><circle cx="8" cy="7" r="1.5"/></svg>
+      積水地圖
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="toolbar">
+    <p class="count-badge">共 <strong id="row-count">9</strong> 筆積水回報</p>
+    <p class="edit-hint">點擊地理位置名稱可直接編輯，按 Enter 儲存</p>
+    <button id="export-btn" onclick="exportScreenshots()" style="display:none; font-size:0.78rem; padding:0.4rem 0.9rem; background:var(--color-accent); color:#fff; border:none; border-radius:5px; cursor:pointer; font-family:var(--font-sans); font-weight:600;">⬇ 匯出截圖檔案</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>編號</th>
+          <th>發佈時間</th>
+          <th>地理位置</th>
+          <th>截圖</th>
+          <th>來源</th>
+        </tr>
+      </thead>
+      <tbody id="flood-table">
+
+        <tr data-id="001">
+          <td class="cell-id">#001</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">08:51</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-001" role="textbox" aria-label="地理位置，可點擊編輯">新竹交流道</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap" style="display:inline-block;">
+              <img class="screenshot-thumb" src="images/screenshot-001.png" alt="新竹交流道積水" data-default-src="images/screenshot-001.png" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:block;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="001" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@jerrylin9471/post/DaB5Z0QEl2P" target="_blank" rel="noopener">
+              @jerrylin9471
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="002">
+          <td class="cell-id">#002</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:14</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-002" role="textbox" aria-label="地理位置，可點擊編輯">信義街勝利路護城河</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap" style="display:inline-block;">
+              <img class="screenshot-thumb" src="images/screenshot-002.png" alt="信義街勝利路護城河積水" data-default-src="images/screenshot-002.png" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:block;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="002" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@chipmunk.80286796/post/DaB72wAD1hY" target="_blank" rel="noopener">
+              @chipmunk.80286796
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="003">
+          <td class="cell-id">#003</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">08:53</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-003" role="textbox" aria-label="地理位置，可點擊編輯">光復路建中路口附近</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap" style="display:inline-block;">
+              <img class="screenshot-thumb" src="images/screenshot-003.png" alt="光復路建中路口積水" data-default-src="images/screenshot-003.png" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:block;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="003" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@arfun777/post/DaB5Sp3AY9L" target="_blank" rel="noopener">
+              @arfun777
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="004">
+          <td class="cell-id">#004</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:12</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-004" role="textbox" aria-label="地理位置，可點擊編輯">待補充</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap">
+              <img class="screenshot-thumb" src="" alt="" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:none;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="004" title="點擊或拖入截圖" style="display:flex;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <span style="color:var(--color-text-muted);font-size:0.82rem;">—</span>
+          </td>
+        </tr>
+
+        <tr data-id="005">
+          <td class="cell-id">#005</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:30</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-005" role="textbox" aria-label="地理位置，可點擊編輯">往竹北高鐵路程</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap">
+              <img class="screenshot-thumb" src="" alt="" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:none;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="005" title="點擊或拖入截圖" style="display:flex;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@03.04_hua/post/DaB9u4mEyxO" target="_blank" rel="noopener">
+              @03.04_hua
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="006">
+          <td class="cell-id">#006</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:30</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-006" role="textbox" aria-label="地理位置，可點擊編輯">經國路一段十字路口</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap">
+              <img class="screenshot-thumb" src="" alt="" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:none;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="006" title="點擊或拖入截圖" style="display:flex;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@guanyu_0615/post/DaB-CzTEgDR" target="_blank" rel="noopener">
+              @guanyu_0615
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="007">
+          <td class="cell-id">#007</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">08:10（影片時間）</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-007" role="textbox" aria-label="地理位置，可點擊編輯">竹科</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap" style="display:inline-block;">
+              <img class="screenshot-thumb" src="images/screenshot-007.png" alt="竹科積水" data-default-src="images/screenshot-007.png" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:block;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="007" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@weeyyyy1111/post/DaB14Lujx0E" target="_blank" rel="noopener">
+              @weeyyyy1111
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="008">
+          <td class="cell-id">#008</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:36</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-008" role="textbox" aria-label="地理位置，可點擊編輯">竹蓮地下道</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap">
+              <img class="screenshot-thumb" src="" alt="" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:none;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="008" title="點擊或拖入截圖" style="display:flex;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@l.uu.414/post/DaB-SDsE3zn" target="_blank" rel="noopener">
+              @l.uu.414
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+        <tr data-id="009">
+          <td class="cell-id">#009</td>
+          <td class="cell-time">
+            <div class="time-date">2026-06-26</div>
+            <div class="time-approx">09:20</div>
+          </td>
+          <td class="cell-location">
+            <span class="location-name" contenteditable="true" data-key="loc-009" role="textbox" aria-label="地理位置，可點擊編輯">公道五下面的停車場</span><span class="edit-badge">編輯</span>
+            <div class="location-tags"><span class="tag">#626竹市淹水</span></div>
+          </td>
+          <td class="cell-screenshot">
+            <div class="screenshot-wrap" style="display:inline-block;">
+              <img class="screenshot-thumb" src="images/screenshot-009.png" alt="公道五停車場積水" data-default-src="images/screenshot-009.png" onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';" style="display:block;">
+              <button class="screenshot-remove-btn" title="移除截圖">✕</button>
+            </div>
+            <div class="screenshot-placeholder" data-row="009" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>
+            <input type="file" class="upload-input" accept="image/*">
+            <div class="gh-status"></div>
+          </td>
+          <td class="cell-source">
+            <a href="https://www.threads.com/@daiyi.xu0507/post/DaB8iXLjGzB" target="_blank" rel="noopener">
+              @daiyi.xu0507
+              <svg class="icon-ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3M9 2h5m0 0v5m0-5L7 9"/></svg>
+            </a>
+            <div class="source-platform">Threads</div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  新竹市積水事件紀錄 · 資料來自社群媒體公開貼文 · 2026-06-26
+  <button class="admin-toggle-btn" onclick="toggleAdmin()" title="管理員登入／登出">🔒</button>
+</footer>
+
+<script>
+  // ── 管理員模式 ──
+  const ADMIN_PW = 'hsinchu626';
+
+  function isAdmin() { return sessionStorage.getItem('admin') === '1'; }
+
+  function applyMode() {
+    const admin = isAdmin();
+    document.body.classList.toggle('admin-mode', admin);
+    document.body.classList.toggle('view-mode', !admin);
+    document.querySelector('.admin-toggle-btn').textContent = admin ? '🔓' : '🔒';
+    document.getElementById('export-btn').style.display = admin ? 'inline-block' : 'none';
+    document.querySelectorAll('.location-name').forEach(el => {
+      el.contentEditable = admin ? 'true' : 'false';
+    });
+    if (admin) updateGhIndicator();
+  }
+
+  // ── GitHub API ──
+  const GH_OWNER  = '2dprtsc885-dot';
+  const GH_REPO   = 'hsinchu-flood';
+  const GH_BRANCH = 'main';
+
+  function ghToken() { return localStorage.getItem('gh-pat') || ''; }
+
+  function ghHeaders() {
+    return {
+      'Authorization': `Bearer ${ghToken()}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async function ghGetFile(path) {
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`,
+      { headers: ghHeaders() }
+    );
+    return r.ok ? r.json() : null;
+  }
+
+  async function ghPutFile(path, base64Content, message, sha) {
+    const body = { message, content: base64Content, branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,
+      { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) }
+    );
+    return r.ok ? r.json() : null;
+  }
+
+  function ghDecode(b64) {
+    const bytes = Uint8Array.from(atob(b64.replace(/\n/g, '')), c => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function ghEncode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    const chunk = 8192;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  // 截圖 → 上傳 GitHub + 更新 HTML
+  async function commitImageToGitHub(rowId, dataUrl, statusEl) {
+    if (!ghToken()) {
+      statusEl.textContent = '⚠ 未設定 Token，截圖僅存本機';
+      statusEl.style.color = '#f59e0b';
+      return;
+    }
+    statusEl.textContent = '⏳ 上傳中…';
+    statusEl.style.color = '#6b7280';
+
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const path   = `images/screenshot-${rowId}.png`;
+
+      const existing = await ghGetFile(path);
+      const result   = await ghPutFile(path, base64, `feat: 更新 #${rowId} 截圖`, existing?.sha);
+      if (!result) throw new Error('commit failed');
+
+      // 若 HTML 尚未記錄此截圖，一起更新 HTML
+      const rowEl = document.querySelector(`tr[data-id="${rowId}"]`);
+      const img   = rowEl?.querySelector('.screenshot-thumb');
+      if (img && !img.dataset.defaultSrc) {
+        await updateHtmlRowScreenshot(rowId, path);
+        img.dataset.defaultSrc = path;
+      }
+
+      statusEl.textContent = '✓ 已同步 GitHub（1~2 分鐘後公開更新）';
+      statusEl.style.color = '#16a34a';
+      setTimeout(() => { statusEl.textContent = ''; }, 6000);
+    } catch {
+      statusEl.textContent = '✗ 同步失敗，截圖已存本機';
+      statusEl.style.color = '#dc2626';
+    }
+  }
+
+  // 更新 GitHub 上 HTML 的截圖欄（首次提交截圖時）
+  async function updateHtmlRowScreenshot(rowId, imagePath) {
+    const file = await ghGetFile('index.html');
+    if (!file) return;
+
+    const html = ghDecode(file.content);
+
+    const rowEl = document.querySelector(`tr[data-id="${rowId}"]`);
+    const locName = rowEl?.querySelector('.location-name')?.textContent.trim() || rowId;
+    const alt = locName + '積水';
+
+    const ONERR = `onerror="this.style.display='none'; this.parentElement.nextElementSibling.style.display='flex'; this.parentElement.style.display='none';"`;
+
+    const oldImg   = `<div class="screenshot-wrap">\n              <img class="screenshot-thumb" src="" alt="" ${ONERR} style="display:none;">\n              <button class="screenshot-remove-btn" title="移除截圖">✕</button>\n            </div>\n            <div class="screenshot-placeholder" data-row="${rowId}" title="點擊或拖入截圖" style="display:flex;">點擊<br>上傳截圖</div>`;
+    const newImg   = `<div class="screenshot-wrap" style="display:inline-block;">\n              <img class="screenshot-thumb" src="${imagePath}" alt="${alt}" data-default-src="${imagePath}" ${ONERR} style="display:block;">\n              <button class="screenshot-remove-btn" title="移除截圖">✕</button>\n            </div>\n            <div class="screenshot-placeholder" data-row="${rowId}" title="點擊或拖入截圖" style="display:none;">點擊<br>上傳截圖</div>`;
+
+    if (!html.includes(oldImg)) return;
+
+    const newHtml = html.replace(oldImg, newImg);
+    await ghPutFile('index.html', ghEncode(newHtml), `feat: #${rowId} 截圖 HTML`, file.sha);
+  }
+
+  // 地點名稱 → 同步 GitHub HTML
+  async function syncLocationToGitHub(rowId, newName) {
+    const ind = document.getElementById('gh-indicator');
+    if (ind) { ind.textContent = '● 同步中…'; ind.className = 'gh-indicator syncing'; }
+
+    try {
+      const file = await ghGetFile('index.html');
+      if (!file) throw new Error();
+
+      const html    = ghDecode(file.content);
+      const re      = new RegExp(`(<span[^>]+data-key="loc-${rowId}"[^>]*>)[^<]*(</span>)`);
+      if (!re.test(html)) throw new Error('span not found');
+
+      const newHtml = html.replace(re, `$1${newName}$2`);
+      await ghPutFile('index.html', ghEncode(newHtml), `fix: 更正 #${rowId} 地點名稱`, file.sha);
+
+      if (ind) { ind.textContent = '● GitHub 已連線'; ind.className = 'gh-indicator connected'; }
+    } catch {
+      if (ind) {
+        ind.textContent = '● 同步失敗';
+        ind.className = 'gh-indicator disconnected';
+        setTimeout(() => updateGhIndicator(), 4000);
+      }
+    }
+  }
+
+  // ── GitHub PAT 設定 Modal ──
+  function showGhModal() {
+    if (document.getElementById('gh-modal-overlay')) { document.getElementById('gh-modal-overlay').remove(); return; }
+    const overlay = document.createElement('div');
+    overlay.id = 'gh-modal-overlay';
+    overlay.className = 'gh-modal-overlay';
+    const token = ghToken();
+    overlay.innerHTML = `
+      <div class="gh-modal">
+        <h3>🔑 GitHub 自動同步設定</h3>
+        <p>輸入 GitHub Personal Access Token（需要 <code>repo</code> 權限）。<br>
+           Token 只存在你的瀏覽器 localStorage，不會外傳。<br>
+           設定後截圖上傳、地點修改均自動 commit 到 GitHub。</p>
+        <input type="password" id="gh-pat-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+               value="${token}" autocomplete="off" spellcheck="false">
+        <div class="gh-test-result" id="gh-test-result"></div>
+        <div class="gh-modal-btns">
+          ${token ? '<button class="btn-clear" onclick="clearGhToken()">清除 Token</button>' : ''}
+          <button onclick="testGhToken()">測試連線</button>
+          <button onclick="document.getElementById(\'gh-modal-overlay\').remove()">取消</button>
+          <button class="btn-save" onclick="saveGhToken()">儲存</button>
+        </div>
+      </div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    document.getElementById('gh-pat-input').focus();
+  }
+
+  async function testGhToken() {
+    const token  = document.getElementById('gh-pat-input').value.trim();
+    const result = document.getElementById('gh-test-result');
+    if (!token) { result.textContent = '請輸入 Token'; result.style.color = '#f59e0b'; return; }
+    result.textContent = '測試中…'; result.style.color = '#6b7280';
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+      });
+      if (r.ok) { result.textContent = '✓ 連線成功！'; result.style.color = '#16a34a'; }
+      else       { result.textContent = '✗ 連線失敗，請確認 Token 正確且有 repo 權限'; result.style.color = '#dc2626'; }
+    } catch {
+      result.textContent = '✗ 網路錯誤'; result.style.color = '#dc2626';
+    }
+  }
+
+  function saveGhToken() {
+    const token = document.getElementById('gh-pat-input').value.trim();
+    if (token) localStorage.setItem('gh-pat', token);
+    document.getElementById('gh-modal-overlay')?.remove();
+    updateGhIndicator();
+  }
+
+  function clearGhToken() {
+    localStorage.removeItem('gh-pat');
+    document.getElementById('gh-modal-overlay')?.remove();
+    updateGhIndicator();
+  }
+
+  function updateGhIndicator() {
+    const el = document.getElementById('gh-indicator');
+    if (!el) return;
+    if (ghToken()) {
+      el.textContent = '● GitHub 已連線';
+      el.className = 'gh-indicator connected';
+    } else {
+      el.textContent = '○ 設定 GitHub';
+      el.className = 'gh-indicator disconnected';
+    }
+  }
+
+  function exportScreenshots() {
+    const found = [];
+    for (let i = 1; i <= 20; i++) {
+      const id   = String(i).padStart(3, '0');
+      const data = localStorage.getItem('screenshot-' + id);
+      if (data) found.push({ id, data });
+    }
+    if (found.length === 0) { alert('目前沒有已上傳的截圖'); return; }
+
+    // 建立下載視窗
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.6);
+      z-index:9999; display:flex; align-items:center; justify-content:center;`;
+
+    const box = document.createElement('div');
+    box.style.cssText = `
+      background:#fff; border-radius:12px; padding:1.5rem;
+      max-width:520px; width:90%; max-height:80vh; overflow-y:auto;
+      box-shadow:0 8px 32px rgba(0,0,0,0.25);`;
+
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <strong style="font-size:0.95rem;">截圖下載（共 ${found.length} 張）</strong>
+        <button onclick="this.closest('div[style*=fixed]').remove()"
+          style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#6b7280;">✕</button>
+      </div>
+      <p style="font-size:0.78rem;color:#6b7280;margin-bottom:1rem;">
+        請逐一點擊「下載」，完成後告訴 Claude，他會幫你推上 GitHub。</p>`;
+
+    found.forEach(({ id, data }) => {
+      const ext  = data.includes('image/png') ? 'png' : 'jpg';
+      const name = `screenshot-${id}.${ext}`;
+      const row  = document.createElement('div');
+      row.style.cssText = `display:flex;align-items:center;gap:0.75rem;
+        padding:0.6rem 0;border-bottom:1px solid #f3f4f6;`;
+      row.innerHTML = `
+        <img src="${data}" style="width:72px;height:48px;object-fit:cover;
+          border-radius:4px;border:1px solid #e5e7eb;flex-shrink:0;">
+        <span style="flex:1;font-size:0.82rem;font-weight:600;">#${id}</span>
+        <a href="${data}" download="${name}"
+          style="padding:0.35rem 0.8rem;background:#e8630a;color:#fff;
+          border-radius:5px;font-size:0.78rem;font-weight:600;text-decoration:none;">
+          ⬇ 下載</a>`;
+      box.appendChild(row);
+    });
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  function toggleAdmin() {
+    if (isAdmin()) {
+      sessionStorage.removeItem('admin');
+      applyMode();
+      return;
+    }
+    const pw = prompt('請輸入管理員密碼：');
+    if (pw === null) return;
+    if (pw === ADMIN_PW) {
+      sessionStorage.setItem('admin', '1');
+      applyMode();
+    } else {
+      alert('密碼錯誤');
+    }
+  }
+
+  applyMode();
+
+  // ── 截圖上傳：點擊或拖曳 ──
+  document.querySelectorAll('.screenshot-placeholder').forEach(placeholder => {
+    const input      = placeholder.nextElementSibling;          // <input type="file">
+    const wrap       = placeholder.previousElementSibling;      // .screenshot-wrap
+    const img        = wrap.querySelector('.screenshot-thumb');
+    const removeBtn  = wrap.querySelector('.screenshot-remove-btn');
+    const key        = 'screenshot-' + placeholder.dataset.row;
+
+    // 還原已儲存截圖
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      img.src = saved;
+      img.style.display = 'block';
+      wrap.style.display = 'inline-block';
+      placeholder.style.display = 'none';
+    }
+
+    // 點擊開啟檔案選擇器
+    placeholder.addEventListener('click', () => input.click());
+
+    // 檔案選擇後讀取
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) loadImage(file, img, wrap, placeholder, key);
+      input.value = '';
+    });
+
+    // 拖曳支援
+    placeholder.addEventListener('dragover', e => { e.preventDefault(); placeholder.classList.add('drag-over'); });
+    placeholder.addEventListener('dragleave', () => placeholder.classList.remove('drag-over'));
+    placeholder.addEventListener('drop', e => {
+      e.preventDefault();
+      placeholder.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadImage(file, img, wrap, placeholder, key);
+    });
+
+    // 移除截圖：清除 localStorage，顯示上傳格讓管理員可換圖
+    removeBtn.addEventListener('click', () => {
+      localStorage.removeItem(key);
+      img.src = '';
+      img.style.display = 'none';
+      wrap.style.display = 'none';
+      placeholder.style.display = 'flex';
+    });
+  });
+
+  function loadImage(file, img, wrap, placeholder, key) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      img.src = dataUrl;
+      img.style.display = 'block';
+      wrap.style.display = 'inline-block';
+      placeholder.style.display = 'none';
+      try { localStorage.setItem(key, dataUrl); } catch(_) {}
+
+      // GitHub 自動同步
+      const rowId    = placeholder.dataset.row;
+      const statusEl = placeholder.parentElement.querySelector('.gh-status');
+      if (statusEl && isAdmin()) {
+        commitImageToGitHub(rowId, dataUrl, statusEl);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── 地理位置編輯：從 localStorage 還原 ──
+  document.querySelectorAll('.location-name[data-key]').forEach(el => {
+    const saved = localStorage.getItem(el.dataset.key);
+    if (saved) el.textContent = saved;
+
+    // Enter 鍵儲存，Escape 取消
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        el.blur();
+      }
+      if (e.key === 'Escape') {
+        const saved = localStorage.getItem(el.dataset.key);
+        if (saved) el.textContent = saved;
+        el.blur();
+      }
+    });
+
+    // 失焦時儲存並顯示閃爍確認，同步到 GitHub
+    el.addEventListener('blur', () => {
+      const val = el.textContent.trim();
+      if (val) {
+        localStorage.setItem(el.dataset.key, val);
+        el.classList.add('saved-flash');
+        setTimeout(() => el.classList.remove('saved-flash'), 800);
+        if (isAdmin() && ghToken()) {
+          const rowId = el.dataset.key.replace('loc-', '');
+          syncLocationToGitHub(rowId, val);
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
