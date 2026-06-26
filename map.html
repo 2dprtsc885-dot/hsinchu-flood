@@ -316,6 +316,32 @@
       color: #dc2626;
       border-color: #fca5a5;
     }
+
+    /* ── 儲存提示 Toast ── */
+    .map-toast {
+      position: fixed;
+      bottom: 4rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #1c2b3a;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 0.55rem 1.1rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      z-index: 3000;
+    }
+    .map-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .map-toast.success { border-left: 3px solid #16a34a; }
+    .map-toast.error   { border-left: 3px solid #dc2626; }
   </style>
 </head>
 <body class="view-mode">
@@ -365,6 +391,7 @@
 </div>
 
 <button class="admin-toggle-btn" onclick="toggleAdmin()" title="管理員登入／登出">🔒</button>
+<div class="map-toast" id="map-toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -406,15 +433,32 @@
     } catch { return {}; }
   }
 
+  // Toast 提示
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const el = document.getElementById('map-toast');
+    el.textContent = msg;
+    el.className = `map-toast ${type} show`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+  }
+
   // 將圖釘位置同步到 GitHub pins.json
   async function syncPinToGitHub(pinId, lat, lng) {
-    if (!ghToken()) return;
+    if (!ghToken()) {
+      showToast('⚠ 未設定 GitHub Token，位置僅存本機', 'error');
+      return;
+    }
+    showToast(`#${pinId} 同步中…`);
     try {
       const file = await ghGetFile('pins.json');
       const pins = file ? JSON.parse(ghDecode(file.content)) : {};
       pins[pinId] = { lat, lng };
       await ghPutFile('pins.json', ghEncode(JSON.stringify(pins, null, 2)), `fix: 更新 #${pinId} 圖釘位置`, file?.sha);
-    } catch (e) { console.error('Pin sync failed:', e); }
+      showToast(`✓ #${pinId} 位置已儲存`, 'success');
+    } catch {
+      showToast(`✗ #${pinId} 儲存失敗`, 'error');
+    }
   }
 
   // ── 管理員模式 ──
