@@ -369,6 +369,55 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // ── GitHub API ──
+  const GH_OWNER  = '2dprtsc885-dot';
+  const GH_REPO   = 'hsinchu-flood';
+  const GH_BRANCH = 'main';
+
+  function ghToken() { return localStorage.getItem('gh-pat') || ''; }
+  function ghHeaders() {
+    return { 'Authorization': `Bearer ${ghToken()}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' };
+  }
+  async function ghGetFile(path) {
+    const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, { headers: ghHeaders() });
+    return r.ok ? r.json() : null;
+  }
+  async function ghPutFile(path, b64, message, sha) {
+    const body = { message, content: b64, branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+    return r.ok ? r.json() : null;
+  }
+  function ghDecode(b64) {
+    const bytes = Uint8Array.from(atob(b64.replace(/\n/g, '')), c => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+  function ghEncode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    return btoa(bin);
+  }
+
+  // 從 GitHub 讀取已儲存的圖釘位置
+  async function loadGitHubPins() {
+    try {
+      const r = await fetch(`https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/pins.json?t=${Date.now()}`);
+      return r.ok ? r.json() : {};
+    } catch { return {}; }
+  }
+
+  // 將圖釘位置同步到 GitHub pins.json
+  async function syncPinToGitHub(pinId, lat, lng) {
+    if (!ghToken()) return;
+    try {
+      const file = await ghGetFile('pins.json');
+      const pins = file ? JSON.parse(ghDecode(file.content)) : {};
+      pins[pinId] = { lat, lng };
+      await ghPutFile('pins.json', ghEncode(JSON.stringify(pins, null, 2)), `fix: 更新 #${pinId} 圖釘位置`, file?.sha);
+    } catch (e) { console.error('Pin sync failed:', e); }
+  }
+
   // ── 管理員模式 ──
   const ADMIN_PW = 'hsinchu626';
   const allMarkers = [];
@@ -501,6 +550,16 @@
       lng: 120.9718,
       pending: false,
     },
+    {
+      id: '011',
+      location: '新竹市立動物園',
+      time: '2026-06-26 約 13:30',
+      source: 'https://www.threads.com/@vodo0420/post/DaCYg8tkoot',
+      account: '@vodo0420',
+      lat: 24.8063,
+      lng: 120.9706,
+      pending: false,
+    },
   ];
 
   // ── 初始化地圖，對準新竹市 ──
@@ -588,6 +647,7 @@
     marker.on('dragend', () => {
       const { lat, lng } = marker.getLatLng();
       localStorage.setItem('pin-pos-' + pt.id, JSON.stringify([lat, lng]));
+      syncPinToGitHub(pt.id, lat, lng);
     });
 
     // 從 localStorage 取用者修改過的地點名稱
@@ -603,6 +663,17 @@
   }
 
   applyMode();
+
+  // 從 GitHub 載入已儲存的圖釘位置，覆蓋預設座標
+  loadGitHubPins().then(ghPins => {
+    floodPoints.forEach((pt, i) => {
+      const saved = ghPins[pt.id];
+      if (saved) {
+        allMarkers[i].setLatLng([saved.lat, saved.lng]);
+        localStorage.setItem('pin-pos-' + pt.id, JSON.stringify([saved.lat, saved.lng]));
+      }
+    });
+  });
 </script>
 
 </body>
