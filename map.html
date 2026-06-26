@@ -376,15 +376,6 @@
   <div id="map"></div>
 
   <div class="map-legend">
-    <strong>圖例</strong>
-    <div class="legend-item">
-      <div class="legend-dot"></div>
-      <span>已確認積水地點</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot pending"></div>
-      <span>待補充地點</span>
-    </div>
     <div class="legend-tip">圖釘可直接拖曳移動</div>
     <button class="reset-btn" onclick="resetPins()">重設所有圖釘位置</button>
   </div>
@@ -531,7 +522,7 @@
       account: null,
       lat: 24.8038,
       lng: 120.9700,
-      pending: true,
+      pending: false,
     },
     {
       id: '005',
